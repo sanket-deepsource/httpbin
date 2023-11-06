@@ -691,7 +691,8 @@ def absolute_redirect_n_times(n):
         description: A redirection.
     """
 
-    assert n > 0
+    if n <= 0:
+        raise AssertionError
 
     if n == 1:
         return redirect(url_for("view_get", _external=True))

@@ -173,7 +173,8 @@ def get_dict(*keys, **extras):
 
     _keys = ('url', 'args', 'form', 'data', 'origin', 'headers', 'files', 'json', 'method')
 
-    assert all(map(_keys.__contains__, keys))
+    if not all(map(_keys.__contains__, keys)):
+        raise AssertionError
     data = request.data
     form = semiflatten(request.form)
 

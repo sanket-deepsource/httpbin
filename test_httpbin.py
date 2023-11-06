@@ -62,12 +62,18 @@ def _make_digest_auth_header(username, password, method, uri, nonce,
     - `body`: body of the outgoing request (bytes), used if qop is "auth-int"
     """
 
-    assert username
-    assert password
-    assert nonce
-    assert method
-    assert uri
-    assert algorithm in ('MD5', 'SHA-256', 'SHA-512', None)
+    if not username:
+        raise AssertionError
+    if not password:
+        raise AssertionError
+    if not nonce:
+        raise AssertionError
+    if not method:
+        raise AssertionError
+    if not uri:
+        raise AssertionError
+    if algorithm not in ('MD5', 'SHA-256', 'SHA-512', None):
+        raise AssertionError
 
     a1 = ':'.join([username, realm or '', password])
     ha1 = _hash(a1.encode('utf-8'), algorithm)
@@ -79,8 +85,10 @@ def _make_digest_auth_header(username, password, method, uri, nonce,
 
     a3 = ':'.join([ha1, nonce])
     if qop in ('auth', 'auth-int'):
-        assert cnonce
-        assert nc
+        if not cnonce:
+            raise AssertionError
+        if not nc:
+            raise AssertionError
         a3 = ':'.join([a3, nc, cnonce, qop])
 
     a3 = ':'.join([a3, ha2])
@@ -131,7 +139,8 @@ class HttpbinTestCase(unittest.TestCase):
             response = method('/response-headers?animal=dog')
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.headers.get_all('animal'), ['dog'])
-            assert json.loads(response.data.decode('utf-8'))['animal'] == 'dog'
+            if json.loads(response.data.decode('utf-8'))['animal'] != 'dog':
+                raise AssertionError
 
     def test_response_headers_multi(self):
         supported_verbs = ['get', 'post']
@@ -140,7 +149,8 @@ class HttpbinTestCase(unittest.TestCase):
             response = method('/response-headers?animal=dog&animal=cat')
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.headers.get_all('animal'), ['dog', 'cat'])
-            assert json.loads(response.data.decode('utf-8'))['animal'] == ['dog', 'cat']
+            if json.loads(response.data.decode('utf-8'))['animal'] != ['dog', 'cat']:
+                raise AssertionError
 
     def test_get(self):
         response = self.app.get('/get', headers={'User-Agent': 'test'})
@@ -315,7 +325,8 @@ class HttpbinTestCase(unittest.TestCase):
             headers={'Authorization': 'Bearer ' + token}
         )
         self.assertEqual(response.status_code, 200)
-        assert json.loads(response.data.decode('utf-8'))['token'] == token
+        if json.loads(response.data.decode('utf-8'))['token'] != token:
+            raise AssertionError
 
     def test_bearer_auth_with_wrong_authorization_type(self):
         """Sending an non-Bearer Authorization header to /bearer should return a 401"""
@@ -581,7 +592,8 @@ class HttpbinTestCase(unittest.TestCase):
         response = self.app.get(path='/get', headers={
             'X-Forwarded-Proto':'https'
         })
-        assert json.loads(response.data.decode('utf-8'))['url'].startswith('https://')
+        if not json.loads(response.data.decode('utf-8'))['url'].startswith('https://'):
+            raise AssertionError
 
     def test_redirect_n_higher_than_1(self):
         response = self.app.get('/redirect/5')
